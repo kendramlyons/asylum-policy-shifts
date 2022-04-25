@@ -1,0 +1,166 @@
+---
+title: "Annotated Arrivals Timeline"
+author: "Kendra Lyons"
+date: '2022-04-15'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggrepel)
+library(ggthemes)
+library(knitr)
+library(tidyverse)
+opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+```
+
+## Data
+
+```{r}
+policy_events <- read_csv("data/migration_policy_events_timeline_2021_ selected.csv", skip = 2) %>%
+  mutate(date = parse_date(date, format = "%m/%d/%Y"),
+         category = factor(category)) #%>% 
+
+key_policy_events <- policy_events %>%
+  filter(category %in% c('MPP ("Remain in Mexico")', 
+                         'Title 42', 'Temporary Protected Status',
+                         'Detention')) 
+  
+
+arrival_counts <- read_csv("data/arrival_date_counts_1.20.csv") %>%
+  rename("date" = arrival_date) %>%
+  add_row(date = as.Date("2021-01-20"), n = 0, seven_avg = 0, .before = 1) %>% # add row so first event isn't missed
+  left_join(key_policy_events)
+
+group_counts <- read_csv("data/groups_limited_1.20.csv") %>%
+  filter(number_in_party != 0)%>%
+  rename("country" = country1)
+
+countries <- read_csv("data/country_counts_1.20.csv")%>%
+  drop_na(country)
+
+```
+
+## Visualize
+
+```{r}
+# set plot theme
+theme_set(theme_minimal(13))
+# visualize policy changes & 7-day-rolling mean of daily arrivals
+arrival_counts  %>%
+  ggplot(aes(x = date,
+             y = n,
+             label = description)) +
+  geom_line(aes(y = seven_avg), 
+            color = 'darkgrey', size = .6) +
+  geom_vline(data = key_policy_events, 
+             aes(xintercept = date, 
+                 color = category),
+             na.rm = TRUE,
+             size = .75) +
+  labs(title = "Migration policy changes affect daily arrivals",
+       color = element_blank(), 
+       x = element_blank(), 
+       y = "Daily Shelter Arrivals") +
+  theme(legend.position = "top") +
+  scale_color_colorblind() +
+  scale_x_date(date_breaks="1 month", 
+               date_labels="%b")
+
+key_policy_events %>%
+  kable(caption = "Immigration Policy Changes in 2021 (Source: Investigative Reporting Workshop)")
+
+```
+
+
+```{r}
+# plot timeline of daily arrivals with selected policy change labels
+arrival_counts  %>%
+  ggplot(aes(x = date,
+             y = n,
+             label = description)) +
+  geom_col(color = "grey") +
+  geom_line(aes(y = seven_avg), 
+            color = 'black', size = .6) +
+  geom_point(data = arrival_counts %>% filter(!is.na(description)), 
+             aes(color = category),
+             show.legend = FALSE) +
+  geom_label_repel(aes(color = category),
+                   na.rm = TRUE,
+                   size = 2.5,
+                   show.legend = FALSE,
+                   nudge_y = 160,
+                   max.overlaps = 11) +
+  scale_x_date(date_breaks="1 month", 
+               date_labels="%b") +
+  scale_color_colorblind() +
+  theme_minimal() +
+  labs(x = element_blank(),
+       y = "Daily Shelter Arrivals") 
+  
+```
+
+```{r}
+group_counts %>% 
+  ggplot(aes(x = arrival_date, 
+             y = number_in_party)) +
+  geom_jitter(aes(size = number_in_party), 
+              alpha = .1, na.rm = TRUE, 
+              show.legend = FALSE) +
+  scale_x_date(date_breaks="1 month", 
+               date_labels="%b") +
+  geom_vline(data = key_policy_events, 
+             aes(xintercept = date, 
+                 color = category),
+             na.rm = TRUE,
+             size = .75) +
+  labs(title ="Migration policy shifts coincide with group size fluctuations", 
+       x = element_blank(), 
+       y = "Group Size",
+       color = element_blank()) +
+  scale_color_colorblind() +
+  theme(legend.position = "top")
+
+# migration policy shifts affect individuals and groups differently
+```
+
+```{r}
+
+# Arrivals by country over time dot plot
+some_countries <- countries$country[countries$n > 3]
+
+group_counts %>%
+  filter(country %in% some_countries) %>% # get rid of NAs! 
+  ggplot(aes(x = arrival_date, 
+             y = factor(country, rev(countries$country)))) +
+  geom_point(alpha = .1) +
+  geom_vline(data = key_policy_events, 
+             aes(xintercept = date, 
+                 color = category),
+             na.rm = TRUE,
+             size = .75) +
+  theme(legend.position = "top") +
+  labs(title = "Policy effects on arrivals over time by origin country",
+       x = element_blank(), 
+       y = element_blank(),
+       color = element_blank()) +
+  scale_x_date(date_breaks = "1 month", 
+               date_labels = "%b") +
+  scale_color_colorblind()
+
+```
+
+Further Resources:
+
+- https://investigativereportingworkshop.org/news/timeline-bidens-immigration-policy/
+
+- https://cmsny.org/biden-immigration-executive-actions/
+
+- https://www.pewresearch.org/fact-tank/2022/01/11/key-facts-about-u-s-immigration-policies-and-bidens-proposed-changes/
+
+- https://www.boundless.com/blog/biden-immigration-tracker/
+
+- https://immpolicytracking.org/home/
+
+- https://www.lawfareblog.com/president-bidens-immigration-executive-actions-recap#Asylum
+
+
