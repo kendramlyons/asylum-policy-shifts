@@ -1,8 +1,10 @@
 ---
-title: "Annotated Arrivals Timeline"
+title: "Asylum seeker arrivals and migration policy events in 2021"
 author: "Kendra Lyons"
 date: '2022-04-15'
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -13,23 +15,30 @@ library(tidyverse)
 opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
 ```
 
-## Data
+## Data Dates: 1/26/21-1/20/22
 
-```{r}
+Data for this project were collected by volunteers and staff at Casa Alitas Welcome Center in Tucson, Arizona. 
+
+```{r, echo=FALSE}
 policy_events <- read_csv("data/migration_policy_events_timeline_2021_ selected.csv", skip = 2) %>%
   mutate(date = parse_date(date, format = "%m/%d/%Y"),
-         category = factor(category)) #%>% 
+         category = category) #%>% 
 
 key_policy_events <- policy_events %>%
   filter(category %in% c('MPP ("Remain in Mexico")', 
-                         'Title 42', 'Temporary Protected Status',
-                         'Detention')) 
+                         'Temporary Protected Status',
+                         'Title 42', 
+                         'Detention')) %>%
+  mutate(category = factor(category, levels=c('MPP ("Remain in Mexico")', 
+                                              'Temporary Protected Status', 
+                                              'Title 42',
+                                              'Detention')))
   
-
 arrival_counts <- read_csv("data/arrival_date_counts_1.20.csv") %>%
   rename("date" = arrival_date) %>%
-  add_row(date = as.Date("2021-01-20"), n = 0, seven_avg = 0, .before = 1) %>% # add row so first event isn't missed
-  left_join(key_policy_events)
+  add_row(date = as.Date("2021-01-20"), n = 0, seven_avg = 0, .before = 1) %>% # add row for first event
+  left_join(key_policy_events)%>%
+  mutate(category = category)
 
 group_counts <- read_csv("data/groups_limited_1.20.csv") %>%
   filter(number_in_party != 0)%>%
@@ -40,66 +49,74 @@ countries <- read_csv("data/country_counts_1.20.csv")%>%
 
 ```
 
+
+
+
 ## Visualize
 
-```{r}
+```{r, echo=FALSE}
 # set plot theme
-theme_set(theme_minimal(13))
+theme_set(theme_minimal(12))
+
+# plot timeline of daily arrivals with selected policy change labels
+arrival_counts  %>%
+  ggplot(aes(x = date,
+             y = n,
+             label = description)) +
+  geom_col(fill ="grey", show.legend = FALSE) +
+  geom_line(aes(y = seven_avg), 
+            color = 'black', size = .6) +
+  geom_label_repel(aes(color = category),
+                   na.rm = TRUE,
+                   size = 2,
+                   show.legend = FALSE,
+                   nudge_y = 170,
+                   max.overlaps = 11) +
+  geom_point(aes(color = category),
+             data = arrival_counts %>% filter(!is.na(description)),
+             show.legend = FALSE) +
+  scale_x_date(date_breaks="1 month", 
+               date_labels="%b",
+               expand = c(.02,-.02)) +
+  scale_color_colorblind() +
+  labs(x = element_blank(),
+       y = "Daily Shelter Arrivals",
+       title = "Migration and policy events in 2021",
+       subtitle = "with Casa Alitas daily arrivals") 
+
+key_policy_events %>%
+  kable(caption = "Immigration Policy Changes in 2021 (Source: Investigative Reporting Workshop)")
+  
+```
+
+
+```{r, echo=FALSE}
 # visualize policy changes & 7-day-rolling mean of daily arrivals
 arrival_counts  %>%
   ggplot(aes(x = date,
              y = n,
              label = description)) +
   geom_line(aes(y = seven_avg), 
-            color = 'darkgrey', size = .6) +
+            color = 'darkgrey', size = .8) +
   geom_vline(data = key_policy_events, 
              aes(xintercept = date, 
                  color = category),
              na.rm = TRUE,
              size = .75) +
-  labs(title = "Migration policy changes affect daily arrivals",
+  labs(title = "Migration policy changes affected daily shelter arrivals in 2021",
        color = element_blank(), 
        x = element_blank(), 
        y = "Daily Shelter Arrivals") +
-  theme(legend.position = "top") +
+  theme(legend.position = "top", legend.justification = -.5) +
   scale_color_colorblind() +
   scale_x_date(date_breaks="1 month", 
-               date_labels="%b")
-
-key_policy_events %>%
-  kable(caption = "Immigration Policy Changes in 2021 (Source: Investigative Reporting Workshop)")
+               date_labels="%b",
+               expand = c(.02,-.02))
 
 ```
 
 
-```{r}
-# plot timeline of daily arrivals with selected policy change labels
-arrival_counts  %>%
-  ggplot(aes(x = date,
-             y = n,
-             label = description)) +
-  geom_col(color = "grey") +
-  geom_line(aes(y = seven_avg), 
-            color = 'black', size = .6) +
-  geom_point(data = arrival_counts %>% filter(!is.na(description)), 
-             aes(color = category),
-             show.legend = FALSE) +
-  geom_label_repel(aes(color = category),
-                   na.rm = TRUE,
-                   size = 2.5,
-                   show.legend = FALSE,
-                   nudge_y = 160,
-                   max.overlaps = 11) +
-  scale_x_date(date_breaks="1 month", 
-               date_labels="%b") +
-  scale_color_colorblind() +
-  theme_minimal() +
-  labs(x = element_blank(),
-       y = "Daily Shelter Arrivals") 
-  
-```
-
-```{r}
+```{r, echo=FALSE}
 group_counts %>% 
   ggplot(aes(x = arrival_date, 
              y = number_in_party)) +
@@ -107,21 +124,24 @@ group_counts %>%
               alpha = .1, na.rm = TRUE, 
               show.legend = FALSE) +
   scale_x_date(date_breaks="1 month", 
-               date_labels="%b") +
+               date_labels="%b",
+               expand = c(.02,-.02)) +
   geom_vline(data = key_policy_events, 
              aes(xintercept = date, 
                  color = category),
              na.rm = TRUE,
              size = .75) +
-  labs(title ="Migration policy shifts coincide with group size fluctuations", 
+  labs(title ="Migration policy shifts affected individuals and groups differently", 
        x = element_blank(), 
        y = "Group Size",
        color = element_blank()) +
   scale_color_colorblind() +
-  theme(legend.position = "top")
+  theme(legend.position = "top", legend.justification = -.5)
+
 
 # migration policy shifts affect individuals and groups differently
 ```
+
 
 ```{r}
 
@@ -138,13 +158,14 @@ group_counts %>%
                  color = category),
              na.rm = TRUE,
              size = .75) +
-  theme(legend.position = "top") +
-  labs(title = "Policy effects on arrivals over time by origin country",
+  theme(legend.position = "top", legend.justification = 1) + #, legend.direction legend.text.align = -1, 
+  labs(title = "Migration policy shifts affected nationalities differently",
        x = element_blank(), 
        y = element_blank(),
        color = element_blank()) +
   scale_x_date(date_breaks = "1 month", 
-               date_labels = "%b") +
+               date_labels = "%b",
+               expand = c(.02,-.02)) +
   scale_color_colorblind()
 
 ```
@@ -163,4 +184,5 @@ Further Resources:
 
 - https://www.lawfareblog.com/president-bidens-immigration-executive-actions-recap#Asylum
 
+- https://www.migrationpolicy.org/article/court-order-relaunch-remain-in-mexico
 
