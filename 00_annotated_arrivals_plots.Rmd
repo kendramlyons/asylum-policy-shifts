@@ -12,12 +12,15 @@ library(ggrepel)
 library(ggthemes)
 library(knitr)
 library(tidyverse)
+library(scales)
 opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+
 ```
+
 
 ## Data Dates: 1/26/21-1/20/22
 
-Data for this project were collected by volunteers and staff at Casa Alitas Welcome Center in Tucson, Arizona. 
+Data for this project were collected by volunteers and staff at Casa Alitas Welcome Center in Tucson, Arizona. This report was prepared by a Master's Student in Information & Data Science at the University of Arizona as a Capstone project. It does not represent the views of the Casa Alitas Program, nor those of Catholic Community Services of Southern Arizona. The dates and event descriptions were obtained from the Investigative Reporting Workshop. These data visualizations have been created under a GNU General Public License. 
 
 ```{r, echo=FALSE}
 policy_events <- read_csv("data/migration_policy_events_timeline_2021_ selected.csv", skip = 2) %>%
@@ -50,13 +53,11 @@ countries <- read_csv("data/country_counts_1.20.csv")%>%
 ```
 
 
-
-
-## Visualize
+## Casa Alitas Arrivals and Migration Policy Shifts
 
 ```{r, echo=FALSE}
-# set plot theme
-theme_set(theme_minimal(12))
+# set plot theme            # FIGURE SIZE??
+theme_set(theme_minimal(13))
 
 # plot timeline of daily arrivals with selected policy change labels
 arrival_counts  %>%
@@ -67,6 +68,7 @@ arrival_counts  %>%
   geom_line(aes(y = seven_avg), 
             color = 'black', size = .6) +
   geom_label_repel(aes(color = category),
+                   fontface = "bold",
                    na.rm = TRUE,
                    size = 2,
                    show.legend = FALSE,
@@ -78,19 +80,28 @@ arrival_counts  %>%
   scale_x_date(date_breaks="1 month", 
                date_labels="%b",
                expand = c(.02,-.02)) +
-  scale_color_colorblind() +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
   labs(x = element_blank(),
        y = "Daily Shelter Arrivals",
-       title = "Migration and policy events in 2021",
-       subtitle = "with Casa Alitas daily arrivals") 
-
-key_policy_events %>%
-  kable(caption = "Immigration Policy Changes in 2021 (Source: Investigative Reporting Workshop)")
+       title = "Asylum seekers and migration policy events in 2021",
+       #subtitle = "Casa Alitas Program, Tucson, AZ",
+       caption = "Sources: Casa Alitas Program (CCS-SOAZ) & Investigative Reporting Workshop") 
   
 ```
 
+Beginning in late January of 2021, the Casa Alitas Welcome Center run by Catholic Community Services of Southern Arizona re-opened its doors after a prolonged closure during the COVID-19 pandemic. The increasing trend in arrivals started at just a few daily arrivals and grew to hundreds. Noticeably though, there were some significant ups and downs. Throughout the year, immigration policy shifts of many kinds preceded (and sometimes book-ended) large fluctuations in daily shelter arrivals. **Table 1** lists specific dates and descriptions of selected U.S. migration policy events in 2021. 
 
-```{r, echo=FALSE}
+```{r}
+key_policy_events %>%
+  kable(caption = "Table 1: Immigration Policy Events in 2021 (Source: Investigative Reporting Workshop)",
+        label = "Table 1")
+```
+
+The **Migrant Protection Protocols (MPP)**, also known as "Remain in Mexico", had considerable ups and downs in 2021. Its suspension early in the year is what precipitated a rise in people allowed to enter the United States to undergo the legal process of seeking asylum due to fear of returning to their home countries. MPP's suspension led to increasing arrival numbers starting in late February, when border authorities began allowing people already enrolled in MPP to enter the country again. MPP forced people with legitimate asylum claims to await a U.S. immigration court trial in Mexico, rather than allowing them temporary permission to enter the country. MPP was reinstated again at the beginning of December, 2021. 
+
+
+```{r, echo=FALSE} 
+#fig.width=7, 
 # visualize policy changes & 7-day-rolling mean of daily arrivals
 arrival_counts  %>%
   ggplot(aes(x = date,
@@ -100,23 +111,64 @@ arrival_counts  %>%
             color = 'darkgrey', size = .8) +
   geom_vline(data = key_policy_events, 
              aes(xintercept = date, 
-                 color = category),
+                 color = category,
+                 linetype = category),
              na.rm = TRUE,
-             size = .75) +
-  labs(title = "Migration policy changes affected daily shelter arrivals in 2021",
-       color = element_blank(), 
+             size = 1.1) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  labs(title = "Migration policy changes affect daily shelter arrivals",
+       color = element_blank(),
+       linetype = element_blank(),
        x = element_blank(), 
-       y = "Daily Shelter Arrivals") +
-  theme(legend.position = "top", legend.justification = -.5) +
-  scale_color_colorblind() +
+       y = "Daily Shelter Arrivals",
+       caption = "Sources: Casa Alitas Program (CCS-SOAZ) & Investigative Reporting Workshop") +
+  theme(legend.position = "top", 
+        legend.justification = 1) +
+  #scale_color_colorblind() +
   scale_x_date(date_breaks="1 month", 
                date_labels="%b",
                expand = c(.02,-.02))
 
 ```
 
+Another policy, **Title 42**, was used to expel people immediately upon their arrival at the border, without giving them the opportunity to request asylum. This use of Title 42 was challenged in court by the ACLU in August, and a series of rulings first blocked it in September, then allowed its use again in October of 2021. As of May 2022, Title 42 is still in effect. 
+
 
 ```{r, echo=FALSE}
+
+# Arrivals by country over time dot plot
+some_countries <- countries$country[countries$n > 100]
+
+group_counts %>%
+  filter(country %in% some_countries) %>% # get rid of NAs
+  ggplot(aes(x = arrival_date, 
+             y = factor(country, rev(countries$country)))) +
+  geom_point(alpha = .1) +
+  geom_vline(data = key_policy_events, 
+             aes(xintercept = date, 
+                 color = category,
+                 linetype = category),
+             na.rm = TRUE,
+             size = 1.1) +
+  theme(legend.position = "top", legend.justification = 1) +  
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  labs(title = "Migration policy shifts affect nationalities differently",
+       x = element_blank(), 
+       y = element_blank(),
+       color = element_blank(),
+       linetype = element_blank(),
+       caption = "Sources: Casa Alitas Program (CCS-SOAZ) & Investigative Reporting Workshop") +
+  scale_x_date(date_breaks = "1 month", 
+               date_labels = "%b",
+               expand = c(.02,-.02)) 
+  #scale_color_colorblind()
+
+```
+
+Another important policy,  **Temporary Protected Status**, determined which nationalities were permitted to stay in the U.S. on a temporary basis due to war, natural disasters or "other extraordinary and temporary conditions" in their home countries (USCIS). The list of nationalities that qualify for TPS changes often, but most migrants who qualify for come from Venezuela and El Salvador, or to a lesser extent, Honduras, Haiti and other countries. 
+
+```{r, echo=FALSE}
+#fig.width=7,
 group_counts %>% 
   ggplot(aes(x = arrival_date, 
              y = number_in_party)) +
@@ -128,61 +180,62 @@ group_counts %>%
                expand = c(.02,-.02)) +
   geom_vline(data = key_policy_events, 
              aes(xintercept = date, 
-                 color = category),
+                 color = category,
+                 linetype = category),
              na.rm = TRUE,
-             size = .75) +
-  labs(title ="Migration policy shifts affected individuals and groups differently", 
+             size = 1.1) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  labs(title ="Migration policy shifts affect individuals and groups differently", 
        x = element_blank(), 
        y = "Group Size",
-       color = element_blank()) +
-  scale_color_colorblind() +
+       color = element_blank(),
+       linetype=element_blank(),
+       caption = "Sources: Casa Alitas Program (CCS-SOAZ) & Investigative Reporting Workshop") +
+  #scale_color_colorblind() +
   theme(legend.position = "top", legend.justification = -.5)
 
-
-# migration policy shifts affect individuals and groups differently
 ```
 
+Shifts in migrant **detention** policy determined which people could be detained or released to await an immigration court date. In July, detention was ended for pregnant migrants with no papers. In mid-December, detention was ended for families and was followed by a large increase in arrivals at the Welcome Center. 
 
-```{r}
+The policies highlighted in this report are only a few of the pieces in the puzzle that is the U.S. immigration system, but they were frequently discussed and monitored by those at the Southern border who work to provide humanitarian aid to migrants. Some advance warning of changes was obtained through limited organizational access to local and federal government institutions, as well as participation in the Southern Border Communities Coalition, an extensive network of organizations that deal with border issues. Despite these ties providing substantial access to information, the ups and downs were at best bewildering and at worst chaotic and frustrating for asylum-seekers, volunteers and shelter staff, alike. 
 
-# Arrivals by country over time dot plot
-some_countries <- countries$country[countries$n > 3]
 
-group_counts %>%
-  filter(country %in% some_countries) %>% # get rid of NAs! 
-  ggplot(aes(x = arrival_date, 
-             y = factor(country, rev(countries$country)))) +
-  geom_point(alpha = .1) +
-  geom_vline(data = key_policy_events, 
-             aes(xintercept = date, 
-                 color = category),
-             na.rm = TRUE,
-             size = .75) +
-  theme(legend.position = "top", legend.justification = 1) + #, legend.direction legend.text.align = -1, 
-  labs(title = "Migration policy shifts affected nationalities differently",
-       x = element_blank(), 
-       y = element_blank(),
-       color = element_blank()) +
-  scale_x_date(date_breaks = "1 month", 
-               date_labels = "%b",
-               expand = c(.02,-.02)) +
-  scale_color_colorblind()
+## Further Resources:
 
-```
 
-Further Resources:
+- **Boundless**: https://www.boundless.com/blog/biden-immigration-tracker/
 
-- https://investigativereportingworkshop.org/news/timeline-bidens-immigration-policy/
+- **Casa Alitas Program**: https://www.casaalitas.org/
 
-- https://cmsny.org/biden-immigration-executive-actions/
+- **CBS News**: https://www.cbsnews.com/news/immigration-title-42-senate-bill-border-expulsions/
 
-- https://www.pewresearch.org/fact-tank/2022/01/11/key-facts-about-u-s-immigration-policies-and-bidens-proposed-changes/
+- **Center for Migration Studies**: https://cmsny.org/biden-immigration-executive-actions/
 
-- https://www.boundless.com/blog/biden-immigration-tracker/
+- **Deseret News**: https://www.deseret.com/2022/4/8/23015106/what-is-title-42-and-why-does-biden-plan-to-end-it-your-questions-answered-us-mexico-border
 
-- https://immpolicytracking.org/home/
+- **El Paso Matters**: https://elpasomatters.org/2021/10/08/timeline-how-title-42-came-to-be-used-on-asylum-seekers/
 
-- https://www.lawfareblog.com/president-bidens-immigration-executive-actions-recap#Asylum
+- **Immigration Policy Tracking Project**: https://immpolicytracking.org/home/
 
-- https://www.migrationpolicy.org/article/court-order-relaunch-remain-in-mexico
+- **Investigative Reporting Workshop**: https://investigativereportingworkshop.org/news/timeline-bidens-immigration-policy/
+
+- **Lawfare Blog**: https://www.lawfareblog.com/president-bidens-immigration-executive-actions-recap#Asylum
+
+- **Migration Policy Institute**: https://www.migrationpolicy.org/article/court-order-relaunch-remain-in-mexico
+
+- **National Immigration Forum**: https://immigrationforum.org/article/fact-sheet-temporary-protected-status/
+
+- **Pew Research**: https://www.pewresearch.org/fact-tank/2022/01/11/key-facts-about-u-s-immigration-policies-and-bidens-proposed-changes/
+
+- **Puente Arizona**: https://puenteaz.org/title42/
+
+- **Southern Border Communities Coalition**: https://www.southernborder.org/
+
+- **U.S. Citizenship and Immigration Services**: https://www.uscis.gov/humanitarian/temporary-protected-status
+
+- **Washington Office on Latin America**: https://www.wola.org/analysis/a-tragic-milestone-20000th-migrant-deported-to-haiti-since-biden-inauguration/
+
+
+
 
