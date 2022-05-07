@@ -129,8 +129,11 @@ dmypy.json
 .pyre/
 .Rproj.user
 
-# html
+# R stuff
 *.html
 RData
 Rhistory
 *.Rproj
+.RData
+.Rhistory
+
