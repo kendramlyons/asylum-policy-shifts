@@ -3,7 +3,7 @@ title: "Asylum seeker arrivals and migration policy events in 2021"
 author: "Kendra Lyons"
 date: '2022-04-15'
 output: 
-  html_document:
+  pdf_document:
     toc: true
 ---
 
@@ -20,12 +20,11 @@ opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
 
 ## Data Dates: 1/26/21-1/20/22
 
-Data for this project were collected by volunteers and staff at Casa Alitas Welcome Center in Tucson, Arizona. This report was prepared by a Master's Student in Information & Data Science at the University of Arizona as a Capstone project. It does not represent the views of the Casa Alitas Program, nor those of Catholic Community Services of Southern Arizona. The dates and event descriptions were obtained from the Investigative Reporting Workshop. These data visualizations have been created under a GNU General Public License. 
+Data for this project were collected by volunteers and staff at Casa Alitas Welcome Center in Tucson, Arizona. This report was prepared by Kendra Lyons, a master's student in Information Science at the University of Arizona as a Capstone project. It does not represent the views of the Casa Alitas Program, nor those of Catholic Community Services of Southern Arizona. The dates and event descriptions were obtained online from the Investigative Reporting Workshop. These data visualizations have been created under a GNU General Public License. 
 
 ```{r, echo=FALSE}
-policy_events <- read_csv("data/migration_policy_events_timeline_2021_ selected.csv", skip = 2) %>%
-  mutate(date = parse_date(date, format = "%m/%d/%Y"),
-         category = category) #%>% 
+policy_events <- read_csv("data/selected_policy_events_2021.csv", skip = 2) %>%
+  mutate(date = parse_date(date, format = "%m/%d/%Y")) #%>% 
 
 key_policy_events <- policy_events %>%
   filter(category %in% c('MPP ("Remain in Mexico")', 
@@ -72,7 +71,7 @@ arrival_counts  %>%
                    na.rm = TRUE,
                    size = 2,
                    show.legend = FALSE,
-                   nudge_y = 170,
+                   nudge_y = 165,  # CHANGE FOR PDF
                    max.overlaps = 11) +
   geom_point(aes(color = category),
              data = arrival_counts %>% filter(!is.na(description)),
@@ -89,7 +88,9 @@ arrival_counts  %>%
   
 ```
 
-Beginning in late January of 2021, the Casa Alitas Welcome Center run by Catholic Community Services of Southern Arizona re-opened its doors after a prolonged closure during the COVID-19 pandemic. The increasing trend in arrivals started at just a few daily arrivals and grew to hundreds. Noticeably though, there were some significant ups and downs. Throughout the year, immigration policy shifts of many kinds preceded (and sometimes book-ended) large fluctuations in daily shelter arrivals. **Table 1** lists specific dates and descriptions of selected U.S. migration policy events in 2021. 
+Beginning in late January of 2021, the Casa Alitas Welcome Center run by Catholic Community Services of Southern Arizona re-opened its doors after a prolonged closure during the COVID-19 pandemic. Daily arrivals grew from just a few daily arrivals to hundreds. Noticeably, there were some significant ups and downs. Throughout the year, immigration policy shifts of many kinds preceded (and sometimes book-ended) large fluctuations in daily shelter arrivals. **Table 1** lists dates and descriptions of selected U.S. migration policy events in 2021. 
+
+With the help of hundreds of volunteers and a staff that expanded from two to fourteen over the course of the year, Alitas assisted over 20,000 migrants in 2021. Kinds of aid provided include travel assistance, food, hygiene supplies, clothing, temporary lodging, COVID-19 tests and vaccinations, and assistance obtaining medical care when needed. Anyone who tested positive for COVID-19 quarantined in a motel or hotel room bloc contracted by Pima County with funding from FEMA. Families quarantined together until everyone tested negative, re-testing every five days.
 
 ```{r}
 key_policy_events %>%
@@ -131,7 +132,7 @@ arrival_counts  %>%
 
 ```
 
-Another policy, **Title 42**, was used to expel people immediately upon their arrival at the border, without giving them the opportunity to request asylum. This use of Title 42 was challenged in court by the ACLU in August, and a series of rulings first blocked it in September, then allowed its use again in October of 2021. As of May 2022, Title 42 is still in effect. 
+**Title 42** is another policy used to expel people immediately upon their arrival at the border, without giving them the opportunity to request asylum. This use of Title 42 was challenged in court by the ACLU in August and a series of rulings first blocked it in September, then allowed its use again in October of 2021. As of May 5, 2022 Title 42 is still in effect, but it may or may not be allowed to expire on May 23. 
 
 
 ```{r, echo=FALSE}
@@ -165,7 +166,7 @@ group_counts %>%
 
 ```
 
-Another important policy,  **Temporary Protected Status**, determined which nationalities were permitted to stay in the U.S. on a temporary basis due to war, natural disasters or "other extraordinary and temporary conditions" in their home countries (USCIS). The list of nationalities that qualify for TPS changes often, but most migrants who qualify for come from Venezuela and El Salvador, or to a lesser extent, Honduras, Haiti and other countries. 
+Another important policy, **Temporary Protected Status**, determined which nationalities were permitted to stay in the U.S. on a temporary basis due to war, natural disasters or "other extraordinary and temporary conditions" in their home countries (USCIS). The list of nationalities that qualify for TPS changes often, but most migrants who qualify come from Venezuela and El Salvador and many are from Honduras, Haiti and other countries. In September, TPS set to expire for people from El Salvador, Nicaragua, Sudan, Honduras, and Nepal was extended until the end of 2022.
 
 ```{r, echo=FALSE}
 #fig.width=7,
@@ -196,25 +197,34 @@ group_counts %>%
 
 ```
 
-Shifts in migrant **detention** policy determined which people could be detained or released to await an immigration court date. In July, detention was ended for pregnant migrants with no papers. In mid-December, detention was ended for families and was followed by a large increase in arrivals at the Welcome Center. 
+Shifts in migrant **detention** policy determined which people could be detained or released to await an immigration court date. In July, detention was ended for pregnant people. In mid-December, detention was ended for families and was followed by a large increase in arrivals at the Welcome Center. 
 
-The policies highlighted in this report are only a few of the pieces in the puzzle that is the U.S. immigration system, but they were frequently discussed and monitored by those at the Southern border who work to provide humanitarian aid to migrants. Some advance warning of changes was obtained through limited organizational access to local and federal government institutions, as well as participation in the Southern Border Communities Coalition, an extensive network of organizations that deal with border issues. Despite these ties providing substantial access to information, the ups and downs were at best bewildering and at worst chaotic and frustrating for asylum-seekers, volunteers and shelter staff, alike. 
-
-
-## Further Resources:
+The policies highlighted in this report are only a few important pieces in the puzzle that is the U.S. immigration system, but they were frequently discussed and monitored by those at the Southern border who work to provide humanitarian aid to migrants. Some advance warning of changes was obtained from local and federal government institutions, or through participation in the Southern Border Communities Coalition, an extensive network of organizations that deal with border issues. Despite these ties providing some access to information, the ups and downs were bewildering, frustrating and sometimes chaotic for volunteers and shelter staff. It was all of that, in addition to being truly dangerous for migrants.
 
 
-- **Boundless**: https://www.boundless.com/blog/biden-immigration-tracker/
+## To Learn More:
 
 - **Casa Alitas Program**: https://www.casaalitas.org/
 
-- **CBS News**: https://www.cbsnews.com/news/immigration-title-42-senate-bill-border-expulsions/
+- **Southern Border Communities Coalition**: https://www.southernborder.org/
+
+- **Catholic Community Services of Southern Arizona**: https://www.ccs-soaz.org/agencies-ministries/detail/alitas-aid-for-migrant-women-and-children
+
+
+### Asylum
+
+- **Southern Border Communities Coalition**: https://www.southernborder.org/border_lens_asylum_seekers_at_the_border
+
+- **U.S. Citizenship and Immigration Services**: https://www.uscis.gov/humanitarian/refugees-and-asylum/asylum/obtaining-asylum-in-the-united-states
+
+- **Syracuse University**: https://trac.syr.edu/immigration/reports/667/
+
+
+### Migration Policy Changes
+
+- **Boundless**: https://www.boundless.com/blog/biden-immigration-tracker/
 
 - **Center for Migration Studies**: https://cmsny.org/biden-immigration-executive-actions/
-
-- **Deseret News**: https://www.deseret.com/2022/4/8/23015106/what-is-title-42-and-why-does-biden-plan-to-end-it-your-questions-answered-us-mexico-border
-
-- **El Paso Matters**: https://elpasomatters.org/2021/10/08/timeline-how-title-42-came-to-be-used-on-asylum-seekers/
 
 - **Immigration Policy Tracking Project**: https://immpolicytracking.org/home/
 
@@ -222,20 +232,38 @@ The policies highlighted in this report are only a few of the pieces in the puzz
 
 - **Lawfare Blog**: https://www.lawfareblog.com/president-bidens-immigration-executive-actions-recap#Asylum
 
+- **Pew Research**: https://www.pewresearch.org/fact-tank/2022/01/11/key-facts-about-u-s-immigration-policies-and-bidens-proposed-changes/
+
+
+### "Remain in Mexico" (MPP)
+
+- **Department of Homeland Security**: https://www.dhs.gov/migrant-protection-protocols
+
 - **Migration Policy Institute**: https://www.migrationpolicy.org/article/court-order-relaunch-remain-in-mexico
+
+- **Reuters**: https://www.reuters.com/world/us/biden-administration-issues-new-memo-ending-trump-remain-mexico-policy-2021-10-29/
+
+
+### Temporary Protected Status
+
+- **Federal Register**: https://www.federalregister.gov/documents/2021/09/10/2021-19617/continuation-of-documentation-for-beneficiaries-of-temporary-protected-status-designations-for-el
 
 - **National Immigration Forum**: https://immigrationforum.org/article/fact-sheet-temporary-protected-status/
 
-- **Pew Research**: https://www.pewresearch.org/fact-tank/2022/01/11/key-facts-about-u-s-immigration-policies-and-bidens-proposed-changes/
+- **U.S. Citizenship and Immigration Services**: https://www.uscis.gov/humanitarian/temporary-protected-status
+
+
+### Title 42
+
+- **American Immigration Council**: https://www.americanimmigrationcouncil.org/research/guide-title-42-expulsions-border
+
+- **CBS News**: https://www.cbsnews.com/news/immigration-title-42-senate-bill-border-expulsions/
+
+- **Deseret News**: https://www.deseret.com/2022/4/8/23015106/what-is-title-42-and-why-does-biden-plan-to-end-it-your-questions-answered-us-mexico-border
+
+- **El Paso Matters**: https://elpasomatters.org/2021/10/08/timeline-how-title-42-came-to-be-used-on-asylum-seekers/
 
 - **Puente Arizona**: https://puenteaz.org/title42/
 
-- **Southern Border Communities Coalition**: https://www.southernborder.org/
-
-- **U.S. Citizenship and Immigration Services**: https://www.uscis.gov/humanitarian/temporary-protected-status
-
 - **Washington Office on Latin America**: https://www.wola.org/analysis/a-tragic-milestone-20000th-migrant-deported-to-haiti-since-biden-inauguration/
-
-
-
 
